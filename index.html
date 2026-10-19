@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PROJECT KAMINO — Threat Assessment &amp; Occam’s Razor Terminal</title>
+<meta name="description" content="A classified diagnostic dashboard for determining whether Washington D.C. has been breached by Kaminoan clone masters or someone just found the Photoshop warp tool." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23090c0d'/%3E%3Cpath d='M16 5l9 5v7c0 6-4 9-9 11-5-2-9-5-9-11v-7z' fill='none' stroke='%2300ff66' stroke-width='1.6'/%3E%3Cellipse cx='16' cy='15' rx='2' ry='5' fill='%2300ff66'/%3E%3C/svg%3E" />
+<style>
+/* ============================================================
+   PROJECT KAMINO // DESIGN SYSTEM
+   ============================================================ */
+:root{
+  --bg:#08090a;
+  --bg-2:#0d1117;
+  --panel:rgba(255,255,255,.04);
+  --panel-2:rgba(255,255,255,.02);
+  --line:rgba(0,255,102,.2);
+  --line-soft:rgba(120,200,170,.14);
+  --green:#00ff66;
+  --cyan:#00f0ff;
+  --amber:#ffb700;
+  --orange:#ff7a1a;
+  --red:#ff3366;
+  --text:#dfeae4;
+  --muted:#8aa39a;
+  --dim:#5d7269;
+  --mono:'Courier New', Consolas, 'Liberation Mono', Menlo, monospace;
+  --sans:system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --status:#00ff66;
+  --status-line:rgba(0,255,102,.45);
+  --status-bg:rgba(0,255,102,.07);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  min-height:100vh;
+  background:
+    radial-gradient(1100px 620px at 50% -12%, rgba(0,240,255,.09), transparent 62%),
+    radial-gradient(900px 700px at 88% 18%, rgba(0,255,102,.05), transparent 60%),
+    radial-gradient(900px 900px at 6% 92%, rgba(255,51,102,.045), transparent 60%),
+    linear-gradient(180deg,#0b1014 0%,#0d1117 42%,#08090a 100%);
+  color:var(--text);
+  font-family:var(--sans);
+  font-size:15px;
+  line-height:1.6;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background-image:
+    linear-gradient(rgba(0,255,102,.032) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,102,.032) 1px, transparent 1px);
+  background-size:52px 52px;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 30%, rgba(0,0,0,.9), transparent 78%);
+  mask-image:radial-gradient(ellipse at 50% 30%, rgba(0,0,0,.9), transparent 78%);
+}
+::selection{background:rgba(0,255,102,.28);color:#eafff3}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+
+/* ---------- CRT overlay ---------- */
+.scanlines{
+  position:fixed;
+  inset:0;
+  z-index:90;
+  pointer-events:none;
+  background:repeating-linear-gradient(to bottom, rgba(0,0,0,.16) 0 1px, transparent 1px 3px);
+  opacity:.55;
+}
+.scanlines::before{
+  content:"";
+  position:absolute;
+  left:0;right:0;top:-160px;
+  height:160px;
+  background:linear-gradient(to bottom, transparent, rgba(0,255,102,.05), transparent);
+  animation:beam 9s linear infinite;
+}
+.scanlines::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:radial-gradient(ellipse at 50% 42%, transparent 52%, rgba(0,0,0,.52) 100%);
+}
+@keyframes beam{
+  0%{transform:translateY(0)}
+  100%{transform:translateY(calc(100vh + 320px))}
+}
+
+/* ---------- layout ---------- */
+.page{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:0 22px 42px}
+
+/* ---------- classification banner ---------- */
+.class-bar{
+  position:relative;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  padding:10px 18px;
+  border-top:1px solid rgba(255,51,102,.38);
+  border-bottom:1px solid rgba(255,51,102,.38);
+  background:
+    repeating-linear-gradient(90deg, rgba(255,51,102,.07) 0 2px, transparent 2px 6px),
+    linear-gradient(90deg, rgba(255,51,102,.14), rgba(255,183,0,.05) 45%, rgba(255,51,102,.14));
+  box-shadow:0 0 32px rgba(255,51,102,.14), inset 0 0 30px rgba(255,51,102,.05);
+  color:#ffb9c9;
+  font-family:var(--mono);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.22em;
+  text-align:center;
+  text-transform:uppercase;
+  animation:barGlow 5s ease-in-out infinite;
+}
+.class-bar .bar-text{
+  text-shadow:0 0 14px rgba(255,51,102,.55);
+  line-height:1.5;
+}
+.bar-tag{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  flex:none;
+  color:#ff8fa5;
+  font-size:8.5px;
+  letter-spacing:.18em;
+  padding:3px 8px;
+  border:1px solid rgba(255,51,102,.35);
+  border-radius:3px;
+}
+.bar-tag .led{width:5px;height:5px;border-radius:50%;background:var(--red);box-shadow:0 0 8px var(--red);animation:blink 1.4s steps(1) infinite}
+@keyframes barGlow{
+  0%,100%{box-shadow:0 0 26px rgba(255,51,102,.12), inset 0 0 30px rgba(255,51,102,.04)}
+  50%{box-shadow:0 0 44px rgba(255,51,102,.22), inset 0 0 36px rgba(255,51,102,.08)}
+}
+
+/* ---------- header ---------- */
+.site-head{padding:32px 0 30px;text-align:center}
+.head-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  text-align:left;
+  margin-bottom:34px;
+}
+.agency{display:flex;align-items:center;gap:11px;min-width:0}
+.agency svg{width:38px;height:38px;flex:none;filter:drop-shadow(0 0 10px rgba(0,255,102,.4))}
+.agency-name{display:block;font:700 10px/1.3 var(--mono);letter-spacing:.16em;color:#cfe9dc}
+.agency-sub{display:block;margin-top:4px;font:9px/1.4 var(--mono);letter-spacing:.13em;color:var(--dim);text-transform:uppercase}
+.head-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;font:700 9.5px/1 var(--mono);letter-spacing:.14em;color:var(--muted)}
+.live-pill{
+  display:inline-flex;align-items:center;gap:7px;
+  border:1px solid rgba(0,255,102,.3);
+  background:rgba(0,255,102,.05);
+  color:#9effc0;
+  border-radius:4px;
+  padding:6px 9px;
+}
+.live-pill i{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.8s steps(1) infinite}
+#clock{color:var(--dim);letter-spacing:.1em}
+
+.hero-kicker{
+  display:inline-flex;align-items:center;gap:9px;
+  font:700 9px/1 var(--mono);letter-spacing:.3em;color:var(--cyan);
+  border:1px solid rgba(0,240,255,.22);
+  background:rgba(0,240,255,.04);
+  padding:7px 12px;border-radius:99px;margin-bottom:22px;
+  text-transform:uppercase;
+}
+.hero-kicker i{width:5px;height:5px;background:var(--cyan);border-radius:50%;box-shadow:0 0 8px var(--cyan)}
+
+.glitch{
+  position:relative;
+  display:inline-block;
+  margin:0;
+  font-family:var(--mono);
+  font-size:clamp(36px, 6.6vw, 78px);
+  font-weight:700;
+  line-height:.98;
+  letter-spacing:.055em;
+  color:#eafff3;
+  text-shadow:0 0 34px rgba(0,255,102,.3), 0 0 2px rgba(234,255,243,.6);
+  animation:headFlicker 11s infinite;
+}
+.glitch::before,
+.glitch::after{
+  content:attr(data-text);
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  opacity:.42;
+}
+.glitch::before{color:var(--cyan);clip-path:inset(0 0 63% 0);transform:translate(-2px,-1px);animation:glitchA 8s infinite steps(1)}
+.glitch::after{color:var(--red);clip-path:inset(57% 0 0 0);transform:translate(2px,1px);animation:glitchB 9s infinite steps(1)}
+.protocol{
+  margin-top:16px;
+  font-family:var(--mono);
+  font-size:clamp(11px,1.5vw,15px);
+  font-weight:700;
+  letter-spacing:.38em;
+  color:var(--green);
+  text-transform:uppercase;
+  text-shadow:0 0 18px rgba(0,255,102,.35);
+}
+.lede{
+  max-width:780px;
+  margin:16px auto 0;
+  color:var(--muted);
+  font-size:15px;
+  line-height:1.65;
+}
+.lede em{color:#b8d6c8;font-style:italic}
+
+.status-strip{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:26px;
+}
+.stat{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 12px;
+  border:1px solid rgba(0,255,102,.16);
+  background:rgba(0,255,102,.035);
+  border-radius:5px;
+  font:700 9.5px/1 var(--mono);
+  letter-spacing:.1em;
+  color:var(--green);
+  white-space:nowrap;
+}
+.stat em{font-style:normal;color:var(--dim);letter-spacing:.12em}
+.stat b{font-weight:700;text-transform:none;letter-spacing:.05em}
+.stat.ok b{color:#8dffb1;text-shadow:0 0 10px rgba(0,255,102,.25)}
+.stat .led{width:5px;height:5px;border-radius:50%;background:currentColor;box-shadow:0 0 7px currentColor;animation:blink 1.6s steps(1) infinite}
+.sound-toggle{
+  font:700 9.5px/1 var(--mono);
+  letter-spacing:.12em;
+  color:var(--dim);
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(120,200,170,.2);
+  border-radius:5px;
+  padding:8px 11px;
+  cursor:pointer;
+  transition:color .2s,border-color .2s,box-shadow .2s;
+}
+.sound-toggle:hover{color:#cfe9dc;border-color:rgba(0,255,102,.4)}
+.sound-toggle.on{color:var(--green);border-color:rgba(0,255,102,.45);box-shadow:0 0 14px rgba(0,255,102,.15)}
+
+/* ---------- cards ---------- */
+.main-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1.06fr) minmax(0,.94fr);
+  gap:20px;
+  align-items:start;
+}
+.card{
+  position:relative;
+  background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.018));
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:22px;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04), 0 26px 70px rgba(0,0,0,.38);
+  overflow:hidden;
+  animation:cardIn .65s cubic-bezier(.2,.8,.3,1) both;
+  transition:border-color .3s, box-shadow .3s;
+}
+.card::before,
+.card::after{
+  content:"";
+  position:absolute;
+  width:16px;height:16px;
+  pointer-events:none;
+  opacity:.65;
+}
+.card::before{top:8px;left:8px;border-top:1px solid var(--green);border-left:1px solid var(--green)}
+.card::after{bottom:8px;right:8px;border-bottom:1px solid var(--green);border-right:1px solid var(--green)}
+.card:nth-child(1){animation-delay:.05s}
+.card:nth-child(2){animation-delay:.14s}
+.card:nth-child(3){animation-delay:.23s}
+@keyframes cardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+.card-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+  font:700 9px/1 var(--mono);
+  letter-spacing:.22em;
+  color:var(--amber);
+  text-transform:uppercase;
+}
+.card-status{display:inline-flex;align-items:center;gap:6px;color:var(--dim);font-size:8.5px;letter-spacing:.14em}
+.card-status i{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2s steps(1) infinite}
+.card-status.done{color:#9effc0}
+.card-status.alert{color:var(--red)}
+.card-status.alert i{background:var(--red);box-shadow:0 0 8px var(--red)}
+.card h2{
+  margin:0;
+  font-family:var(--mono);
+  font-size:clamp(17px,2vw,21px);
+  font-weight:700;
+  letter-spacing:.055em;
+  line-height:1.2;
+  text-transform:uppercase;
+  color:#edfff4;
+  text-shadow:0 0 20px rgba(0,255,102,.2);
+}
+.card-sub{margin:8px 0 0;color:var(--muted);font-size:12.5px;line-height:1.6;max-width:56ch}
+
+/* ---------- module 01 : neck ---------- */
+.neck-card[data-tier="0"]{--status:#00ff66;--status-line:rgba(0,255,102,.45);--status-bg:rgba(0,255,102,.07)}
+.neck-card[data-tier="1"]{--status:#ffb700;--status-line:rgba(255,183,0,.45);--status-bg:rgba(255,183,0,.07)}
+.neck-card[data-tier="2"]{--status:#ff7a1a;--status-line:rgba(255,122,26,.5);--status-bg:rgba(255,122,26,.08)}
+.neck-card[data-tier="3"]{--status:#ff3366;--status-line:rgba(255,51,102,.55);--status-bg:rgba(255,51,102,.09)}
+.neck-card[data-tier="3"]{
+  border-color:rgba(255,51,102,.5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04), 0 0 46px rgba(255,51,102,.16), 0 26px 70px rgba(0,0,0,.38);
+}
+.neck-card[data-tier="3"] .neck-stage{border-color:rgba(255,51,102,.28);background-color:#0d0709}
+
+.neck-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(268px,.92fr);gap:18px;margin-top:18px;align-items:stretch}
+
+.neck-stage{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:420px;
+  padding:26px 10px 30px;
+  border:1px solid rgba(0,255,102,.16);
+  border-radius:10px;
+  background:
+    radial-gradient(ellipse at 50% 38%, rgba(0,255,102,.06), transparent 62%),
+    repeating-linear-gradient(0deg, rgba(0,255,102,.022) 0 1px, transparent 1px 30px),
+    repeating-linear-gradient(90deg, rgba(0,255,102,.022) 0 1px, transparent 1px 30px),
+    #060a0b;
+  overflow:hidden;
+  transition:border-color .3s, background-color .3s;
+}
+.neck-stage::after{
+  content:"";
+  position:absolute;
+  left:0;right:0;top:-40%;
+  height:38%;
+  background:linear-gradient(to bottom, transparent, rgba(0,240,255,.045), transparent);
+  animation:stageScan 7s linear infinite;
+  pointer-events:none;
+}
+@keyframes stageScan{0%{transform:translateY(0)}100%{transform:translateY(420%)}}
+
+.portrait-svg{
+  display:block;
+  width:100%;
+  height:clamp(390px, 40vw, 512px);
+  overflow:visible;
+}
+.stage-label{
+  position:absolute;
+  z-index:2;
+  font:700 7.5px/1 var(--mono);
+  letter-spacing:.18em;
+  color:#4c7a64;
+  text-transform:uppercase;
+  pointer-events:none;
+  white-space:nowrap;
+}
+.stage-label b{color:#7fae95;font-weight:700}
+.stage-label.tl{top:10px;left:12px}
+.stage-label.tr{top:10px;right:12px}
+.stage-label.bl{bottom:10px;left:12px}
+.stage-label.br{bottom:10px;right:12px}
+.stage-label.alert{color:var(--red);text-shadow:0 0 10px rgba(255,51,102,.6);animation:blink 1s steps(1) infinite}
+
+/* ---------- calibration panel ---------- */
+.calib-panel{
+  display:flex;
+  flex-direction:column;
+  gap:13px;
+  padding:16px;
+  border:1px solid rgba(0,255,102,.15);
+  border-radius:10px;
+  background:rgba(3,8,6,.5);
+  transition:border-color .3s;
+}
+.neck-card[data-tier="3"] .calib-panel{border-color:rgba(255,51,102,.35)}
+.readout-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:18px}
+.eyebrow{font:700 8px/1.4 var(--mono);letter-spacing:.24em;color:var(--dim);text-transform:uppercase}
+.rec{display:inline-flex;align-items:center;gap:5px;font:700 8px/1 var(--mono);letter-spacing:.16em;color:var(--red)}
+.rec i{width:5px;height:5px;border-radius:50%;background:var(--red);box-shadow:0 0 8px var(--red);animation:blink 1.2s steps(1) infinite}
+.alien-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  border:1px solid rgba(255,51,102,.5);
+  background:rgba(255,51,102,.1);
+  color:#ff9ab0;
+  border-radius:4px;
+  padding:3px 7px 3px 4px;
+  font:700 7px/1.1 var(--mono);
+  letter-spacing:.12em;
+  animation:alertPulse 1.1s steps(2,end) infinite;
+}
+.alien-chip[hidden]{display:none}
+.alien-chip svg{width:14px;height:22px;flex:none}
+.alien-chip span{display:block}
+
+.neck-value{display:flex;align-items:baseline;gap:8px;margin:-2px 0 0}
+.neck-value .num{
+  font-family:var(--mono);
+  font-size:47px;
+  font-weight:700;
+  line-height:1;
+  letter-spacing:-.02em;
+  color:var(--status);
+  text-shadow:0 0 26px var(--status);
+  transition:color .25s, text-shadow .25s;
+}
+.neck-value .unit{font:700 12px/1 var(--mono);letter-spacing:.14em;color:var(--muted)}
+
+.status-box{
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+  min-height:66px;
+  padding:11px 12px;
+  border:1px solid var(--status-line);
+  border-radius:7px;
+  background:var(--status-bg);
+  color:var(--status);
+  font:700 11.5px/1.5 var(--mono);
+  letter-spacing:.01em;
+  text-shadow:0 0 14px rgba(0,0,0,.4);
+  transition:color .25s,border-color .25s,background-color .25s;
+}
+.status-box .led{
+  flex:none;
+  width:7px;height:7px;
+  margin-top:5px;
+  border-radius:50%;
+  background:currentColor;
+  box-shadow:0 0 10px currentColor;
+  animation:blink 1.8s steps(1) infinite;
+}
+.status-box.alert{animation:alertPulse .95s steps(2,end) infinite}
+@keyframes alertPulse{0%,49%{opacity:1}50%,100%{opacity:.55}}
+
+.mini-metrics{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px 10px;
+  font:700 8.5px/1.6 var(--mono);
+  letter-spacing:.09em;
+  color:var(--dim);
+  text-transform:uppercase;
+}
+.mini-metrics b{color:#a9c9ba;font-weight:700}
+.mini-metrics b.hot{color:var(--red);text-shadow:0 0 10px rgba(255,51,102,.4)}
+
+.slider-label{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:2px;
+  font:700 9.5px/1.4 var(--mono);
+  letter-spacing:.1em;
+  color:#b9d8c8;
+  text-transform:uppercase;
+}
+.slider-label .range{color:var(--dim);font-size:8.5px;letter-spacing:.08em;white-space:nowrap}
+.reset-ditch{
+  border:none;background:none;padding:0;margin:0;
+  font:700 8.5px/1 var(--mono);letter-spacing:.1em;
+  color:var(--cyan);opacity:.8;cursor:pointer;text-decoration:underline;text-underline-offset:2px;
+}
+.reset-ditch:hover{opacity:1}
+
+input[type="range"].neck-slider{
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  height:30px;
+  margin:0;
+  background:transparent;
+  cursor:pointer;
+}
+input[type="range"].neck-slider::-webkit-slider-runnable-track{
+  height:8px;
+  border-radius:99px;
+  background:linear-gradient(90deg,#00ff66 0%,#8cff4d 14%,#ffb700 40%,#ff7a1a 64%,#ff3366 88%,#ff3366 100%);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.55), 0 0 18px rgba(0,255,102,.12);
+}
+input[type="range"].neck-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:22px;height:22px;
+  margin-top:-7px;
+  border-radius:50%;
+  background:#06120b;
+  border:2px solid var(--status);
+  box-shadow:0 0 0 4px rgba(0,0,0,.45), 0 0 16px var(--status);
+  transition:transform .15s, border-color .25s, box-shadow .25s;
+}
+input[type="range"].neck-slider:active::-webkit-slider-thumb{transform:scale(1.12)}
+input[type="range"].neck-slider::-moz-range-track{
+  height:8px;border-radius:99px;
+  background:linear-gradient(90deg,#00ff66 0%,#8cff4d 14%,#ffb700 40%,#ff7a1a 64%,#ff3366 88%,#ff3366 100%);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.55);
+}
+input[type="range"].neck-slider::-moz-range-thumb{
+  width:18px;height:18px;border-radius:50%;
+  background:#06120b;border:2px solid var(--status);
+  box-shadow:0 0 0 4px rgba(0,0,0,.45), 0 0 16px var(--status);
+}
+.slider-scale{
+  display:flex;justify-content:space-between;
+  margin-top:-4px;
+  font:700 8px/1 var(--mono);letter-spacing:.06em;color:var(--dim);
+}
+
+.tier-legend{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:3px}
+.tier-legend li{
+  display:grid;
+  grid-template-columns:7px 40px minmax(0,1fr);
+  align-items:center;
+  gap:8px;
+  padding:5px 7px;
+  border-left:2px solid transparent;
+  border-radius:4px;
+  font:700 8.5px/1.45 var(--mono);
+  color:#5f776b;
+  transition:background-color .2s,color .2s,border-color .2s;
+}
+.tier-legend li:nth-child(1){--tier-c:#00ff66}
+.tier-legend li:nth-child(2){--tier-c:#ffb700}
+.tier-legend li:nth-child(3){--tier-c:#ff7a1a}
+.tier-legend li:nth-child(4){--tier-c:#ff3366}
+.tier-legend li i{width:6px;height:6px;border-radius:50%;background:var(--tier-c);box-shadow:0 0 7px var(--tier-c);opacity:.55}
+.tier-legend li .tr{color:var(--tier-c);opacity:.9;letter-spacing:.03em}
+.tier-legend li.active{background:rgba(255,255,255,.045);border-left-color:var(--tier-c);color:#dbeee3}
+.tier-legend li.active i{opacity:1}
+.tier-legend li.active .tn{color:#dbeee3}
+.calib-note{
+  margin:2px 0 0;
+  padding-top:9px;
+  border-top:1px dashed rgba(120,200,170,.16);
+  font:8.5px/1.6 var(--mono);
+  letter-spacing:.04em;
+  color:#53665c;
+}
+
+/* ---------- module 02 : diagnostics ---------- */
+.occam-card{display:flex;flex-direction:column}
+.q-progress{display:flex;gap:6px;margin:20px 0 16px}
+.qp{
+  flex:1;
+  padding:7px 8px;
+  border:1px solid rgba(0,255,102,.12);
+  background:rgba(0,255,102,.02);
+  border-radius:4px;
+  font:700 7.5px/1.2 var(--mono);
+  letter-spacing:.1em;
+  color:#4f6a5c;
+  text-align:center;
+  white-space:nowrap;
+  transition:all .25s;
+}
+.qp.active{color:var(--cyan);border-color:rgba(0,240,255,.4);background:rgba(0,240,255,.06);box-shadow:0 0 14px rgba(0,240,255,.1)}
+.qp.done{color:var(--green);border-color:rgba(0,255,102,.3);background:rgba(0,255,102,.05)}
+.q{display:none}
+.q.active{display:block;animation:qIn .32s ease both}
+@keyframes qIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}
+.q-no{font:700 8px/1 var(--mono);letter-spacing:.22em;color:var(--amber);margin-bottom:10px}
+.q-text{margin:0;font-size:14.5px;line-height:1.5;color:#d9eee3;font-weight:600}
+.q-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.q-actions.col{flex-direction:column;flex-wrap:nowrap}
+.q-actions .btn{flex:1;min-width:104px}
+.q.answered .btn{pointer-events:none;opacity:.55}
+
+.btn{
+  font:700 10.5px/1.5 var(--mono);
+  letter-spacing:.03em;
+  color:#bdf7d5;
+  background:rgba(0,255,102,.05);
+  border:1px solid rgba(0,255,102,.32);
+  border-radius:7px;
+  padding:11px 13px;
+  cursor:pointer;
+  text-align:left;
+  transition:background-color .18s,border-color .18s,box-shadow .18s,transform .18s,color .18s;
+}
+.btn:hover{
+  background:rgba(0,255,102,.12);
+  border-color:var(--green);
+  color:#eafff3;
+  box-shadow:0 0 20px rgba(0,255,102,.18);
+  transform:translateY(-1px);
+}
+.btn:active{transform:translateY(0)}
+.q-actions:not(.col) .btn{text-align:center;letter-spacing:.08em}
+.opt{display:flex;gap:10px;align-items:flex-start;line-height:1.55;font-size:10.5px}
+.opt-tag{
+  flex:none;
+  display:inline-flex;align-items:center;justify-content:center;
+  width:19px;height:19px;
+  border:1px solid rgba(0,240,255,.4);
+  border-radius:3px;
+  color:var(--cyan);
+  font-size:9px;
+  background:rgba(0,240,255,.05);
+}
+
+.evidence{
+  margin-top:16px;
+  padding:10px 12px;
+  border:1px dashed rgba(0,240,255,.16);
+  border-radius:8px;
+  background:rgba(0,240,255,.022);
+  font:9.5px/1.7 var(--mono);
+  letter-spacing:.02em;
+  color:#678577;
+}
+.ev-title{font-size:7.5px;letter-spacing:.22em;color:rgba(0,240,255,.65);margin-bottom:5px}
+.evidence ul{list-style:none;margin:0;padding:0;display:grid;gap:3px}
+.evidence li{color:#7fa392;overflow-wrap:anywhere}
+.evidence li b{color:var(--cyan);font-weight:700}
+.evidence li.ev-empty{color:#4e6a5d}
+
+.verdict{margin-top:18px;text-align:center}
+.verdict[hidden]{display:none}
+.stamp{
+  position:relative;
+  display:inline-block;
+  padding:17px 24px 14px;
+  border:3px solid var(--red);
+  border-radius:6px;
+  color:#ff5c82;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,51,102,.07) 0 1px, transparent 1px 4px),
+    rgba(24,4,10,.6);
+  box-shadow:0 0 0 1px rgba(255,51,102,.2) inset, 0 0 34px rgba(255,51,102,.18);
+  text-transform:uppercase;
+  font-family:var(--mono);
+  transform:rotate(-5deg);
+  opacity:0;
+}
+.stamp::before{
+  content:"";
+  position:absolute;
+  inset:4px;
+  border:1px dashed rgba(255,51,102,.5);
+  border-radius:3px;
+  pointer-events:none;
+}
+.stamp.in{animation:stampIn .55s cubic-bezier(.2,1.5,.4,1) forwards}
+@keyframes stampIn{
+  0%{transform:scale(2.15) rotate(-1deg);opacity:0}
+  55%{transform:scale(.93) rotate(-6.5deg);opacity:1}
+  76%{transform:scale(1.03) rotate(-4.4deg);opacity:1}
+  100%{transform:scale(1) rotate(-5deg);opacity:1}
+}
+.stamp-small{font-size:7px;letter-spacing:.32em;opacity:.8;margin-bottom:7px;font-weight:700}
+.stamp-main{
+  font-size:clamp(17px,2.5vw,24px);
+  font-weight:700;
+  line-height:1.2;
+  letter-spacing:.01em;
+  text-shadow:0 0 20px rgba(255,51,102,.4);
+}
+.stamp-bottom{
+  margin-top:7px;
+  padding-top:6px;
+  border-top:2px solid currentColor;
+  font-size:clamp(11px,1.9vw,15px);
+  font-weight:700;
+  letter-spacing:.16em;
+}
+.verdict-meta{
+  margin-top:12px;
+  font:700 7.5px/1.8 var(--mono);
+  letter-spacing:.13em;
+  color:#7d5a64;
+}
+.verdict-note{
+  margin:12px auto 0;
+  max-width:44ch;
+  font-size:12px;
+  line-height:1.6;
+  color:var(--muted);
+}
+.verdict .btn{display:inline-block;flex:none;margin-top:14px;min-width:0;text-align:center;font-size:9px;padding:9px 14px;color:#9fe8c0}
+
+/* ---------- module 03 : token injector ---------- */
+.token-card{grid-column:1 / -1}
+.inject-layout{display:grid;grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr);gap:24px;margin-top:2px;align-items:stretch}
+.inject-copy{display:flex;flex-direction:column;align-items:flex-start}
+.inject-copy h2{margin-top:2px}
+.inject-btn{
+  position:relative;
+  margin-top:20px;
+  width:100%;
+  padding:16px 18px;
+  border:1px solid var(--green);
+  border-radius:8px;
+  background:linear-gradient(180deg, rgba(0,255,102,.12), rgba(0,255,102,.04));
+  color:var(--green);
+  font:700 11.5px/1.4 var(--mono);
+  letter-spacing:.11em;
+  text-transform:uppercase;
+  cursor:pointer;
+  box-shadow:0 0 22px rgba(0,255,102,.16), inset 0 0 20px rgba(0,255,102,.05);
+  animation:btnPulse 2.6s ease-in-out infinite;
+  transition:background-color .2s,box-shadow .2s,transform .2s;
+}
+.inject-btn:hover{
+  background:linear-gradient(180deg, rgba(0,255,102,.2), rgba(0,255,102,.07));
+  box-shadow:0 0 38px rgba(0,255,102,.35), inset 0 0 24px rgba(0,255,102,.09);
+  transform:translateY(-1px);
+  animation-play-state:paused;
+}
+.inject-btn:disabled{
+  cursor:progress;
+  color:#8dffb1;
+  animation:none;
+  box-shadow:0 0 30px rgba(0,255,102,.24), inset 0 0 24px rgba(0,255,102,.08);
+}
+@keyframes btnPulse{
+  0%,100%{box-shadow:0 0 16px rgba(0,255,102,.13), inset 0 0 16px rgba(0,255,102,.04)}
+  50%{box-shadow:0 0 36px rgba(0,255,102,.34), inset 0 0 24px rgba(0,255,102,.09)}
+}
+.inject-note{margin:14px 0 0;font:8.5px/1.7 var(--mono);letter-spacing:.05em;color:#556a5f;max-width:40ch}
+.inject-stats{display:grid;gap:7px;margin:auto 0 0;padding-top:18px;width:100%}
+.inject-stats div{display:flex;justify-content:space-between;gap:12px;padding-top:7px;border-top:1px dashed rgba(120,200,170,.14);font:700 8.5px/1.3 var(--mono);letter-spacing:.1em}
+.inject-stats dt{color:#4f675c}
+.inject-stats dd{margin:0;color:#9fc3b1}
+
+.terminal{
+  display:flex;
+  flex-direction:column;
+  min-height:358px;
+  border:1px solid rgba(0,255,102,.25);
+  border-radius:10px;
+  background:#040706;
+  overflow:hidden;
+  box-shadow:inset 0 0 70px rgba(0,255,102,.035), 0 18px 50px rgba(0,0,0,.35);
+}
+.term-bar{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:9px 12px;
+  border-bottom:1px solid rgba(0,255,102,.18);
+  background:rgba(0,255,102,.04);
+  font:700 8.5px/1.3 var(--mono);
+  letter-spacing:.1em;
+  color:#668476;
+  flex:none;
+}
+.term-bar .t-dot{width:7px;height:7px;border-radius:50%;flex:none}
+.term-bar .r{background:#ff5f57}
+.term-bar .y{background:#febc2e}
+.term-bar .g{background:#28c840}
+.term-title{flex:1;margin-left:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.06em;color:#6e8f80}
+.term-tokens{flex:none;color:#5a7a6b;letter-spacing:.08em}
+.term-tokens b{color:var(--green);font-weight:700}
+.term-body{
+  flex:1;
+  min-height:250px;
+  max-height:332px;
+  overflow-y:auto;
+  padding:14px 16px 18px;
+  font:11.5px/1.95 var(--mono);
+  color:#a6dcc0;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(0,255,102,.28) transparent;
+}
+.term-body::-webkit-scrollbar{width:8px}
+.term-body::-webkit-scrollbar-track{background:transparent}
+.term-body::-webkit-scrollbar-thumb{background:rgba(0,255,102,.22);border-radius:8px}
+.term-line{white-space:pre-wrap;overflow-wrap:anywhere;text-shadow:0 0 12px rgba(0,255,102,.06)}
+.term-line .prompt{color:var(--cyan);margin-right:6px}
+.term-line.dim{color:#587466}
+.term-line.am{color:#e8bd74}
+.term-line.cy{color:#7ae9ef}
+.term-line.rd{color:#ff8fa5}
+.term-line.ok{color:var(--green);text-shadow:0 0 14px rgba(0,255,102,.28)}
+.cursor{
+  display:inline-block;
+  width:7px;height:12px;
+  margin-left:2px;
+  vertical-align:-1px;
+  background:var(--green);
+  box-shadow:0 0 8px rgba(0,255,102,.7);
+  animation:blink 1s steps(1) infinite;
+}
+.term-foot{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex:none;
+  padding:8px 12px;
+  border-top:1px solid rgba(0,255,102,.14);
+  background:rgba(0,0,0,.42);
+  font:700 8px/1 var(--mono);
+  letter-spacing:.16em;
+  color:#5b7769;
+}
+#termState{min-width:64px}
+#termState.live{color:var(--amber)}
+#termState.done{color:var(--green);text-shadow:0 0 10px rgba(0,255,102,.35)}
+.token-bar{flex:1;height:5px;border-radius:99px;background:rgba(0,255,102,.09);overflow:hidden}
+.token-bar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--green),var(--cyan));box-shadow:0 0 10px rgba(0,255,102,.5);transition:width .12s linear}
+
+/* ---------- footer ---------- */
+.foot{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:22px;
+  flex-wrap:wrap;
+  margin-top:30px;
+  padding:20px 4px 0;
+  border-top:1px solid rgba(0,255,102,.14);
+  color:#55685f;
+}
+.foot-left{display:flex;align-items:center;gap:11px;font:700 8.5px/1.5 var(--mono);letter-spacing:.12em;color:#7c998a}
+.foot-left span{display:block;font-weight:400;color:#4d6459;letter-spacing:.08em}
+.foot-seal{
+  display:flex;align-items:center;justify-content:center;
+  width:34px;height:34px;
+  flex:none;
+  border:1px solid rgba(0,255,102,.3);
+  border-radius:50%;
+  color:var(--green);
+  font:700 10px/1 var(--mono);
+  letter-spacing:.02em;
+  box-shadow:0 0 16px rgba(0,255,102,.12);
+}
+.foot-note{margin:0;font:8px/1.8 var(--mono);letter-spacing:.08em;color:#4c6158;text-align:center;max-width:520px}
+.foot-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.barcode{
+  width:122px;height:24px;
+  background:repeating-linear-gradient(90deg,#8ff5bd 0 1px,transparent 1px 3px,#8ff5bd 3px 4px,transparent 4px 8px,#8ff5bd 8px 10px,transparent 10px 12px);
+  opacity:.4;
+}
+.foot-right small{font:700 7px/1 var(--mono);letter-spacing:.24em;color:#4c6158}
+
+/* ---------- keyframes ---------- */
+@keyframes blink{0%,55%{opacity:1}56%,100%{opacity:.15}}
+@keyframes headFlicker{0%,96%,100%{opacity:1}97%{opacity:.82}98%{opacity:1}99%{opacity:.9}}
+@keyframes glitchA{
+  0%,91%,100%{transform:translate(-2px,-1px);opacity:.42}
+  92%{transform:translate(-7px,-2px);opacity:.7}
+  94%{transform:translate(3px,1px);opacity:.5}
+  96%{transform:translate(-2px,0);opacity:.42}
+}
+@keyframes glitchB{
+  0%,88%,100%{transform:translate(2px,1px);opacity:.42}
+  89%{transform:translate(6px,2px);opacity:.65}
+  92%{transform:translate(-3px,-1px);opacity:.5}
+  95%{transform:translate(2px,0);opacity:.42}
+}
+
+/* ---------- responsive ---------- */
+@media (max-width:1240px){
+  .neck-layout{grid-template-columns:minmax(0,1fr) minmax(250px,.92fr);gap:14px}
+  .portrait-svg{height:clamp(380px, 41vw, 500px)}
+}
+@media (max-width:1060px){
+  .main-grid{grid-template-columns:1fr}
+  .token-card{grid-column:auto}
+  .neck-layout{grid-template-columns:minmax(0,1.05fr) minmax(280px,.95fr)}
+  .occam-card{order:2}
+  .neck-card{order:1}
+  .token-card{order:3}
+}
+@media (max-width:820px){
+  .page{padding:0 15px 36px}
+  .neck-layout{grid-template-columns:1fr}
+  .portrait-svg{height:clamp(360px,60vw,480px)}
+  .neck-stage{min-height:0}
+  .inject-layout{grid-template-columns:1fr;gap:18px}
+  .inject-stats{margin-top:4px}
+  .head-top{margin-bottom:26px}
+  .agency-sub{display:none}
+  .bar-tag{display:none}
+  .class-bar{font-size:9px;letter-spacing:.16em;padding:10px 12px}
+}
+@media (max-width:600px){
+  .site-head{padding:24px 0 24px}
+  .head-top{flex-direction:column;align-items:flex-start;gap:14px;margin-bottom:24px}
+  .head-meta{justify-content:flex-start}
+  .lede{font-size:13.5px}
+  .card{padding:17px;border-radius:12px}
+  .status-strip{gap:6px}
+  .stat{font-size:8.5px;padding:7px 9px}
+  .neck-value .num{font-size:40px}
+  .inject-btn{font-size:10px;letter-spacing:.08em}
+  .term-body{font-size:10.5px;padding:12px}
+  .foot{flex-direction:column;align-items:flex-start;gap:16px}
+  .foot-right{align-items:flex-start}
+  .foot-note{text-align:left}
+  .qp{font-size:6.5px;letter-spacing:.06em;padding:6px 3px}
+  .stage-label{font-size:6.5px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+    scroll-behavior:auto !important;
+  }
+  .stamp{opacity:1}
+  .stamp.in{animation:none;transform:rotate(-5deg)}
+}
+</style>
+</head>
+<body>
+<div class="scanlines" aria-hidden="true"></div>
+
+<div class="class-bar" role="note" aria-label="Classification level four clearance">
+  <span class="bar-tag"><i class="led"></i>CLASSIFIED</span>
+  <span class="bar-text">[ CLASSIFIED // LEVEL 4 CLEARANCE // DEPT OF REPTILIAN CONTAINMENT ]</span>
+  <span class="bar-tag">LEVEL 4</span>
+</div>
+
+<div class="page">
+  <header class="site-head">
+    <div class="head-top">
+      <div class="agency">
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <path d="M24 4 40 12v11c0 10-7 16.5-16 20C15 39.5 8 33 8 23V12Z" fill="rgba(0,255,102,.05)" stroke="#00ff66" stroke-width="1.5"/>
+          <path d="M14 23c3.5-6 6.5-8.5 10-8.5S30.5 17 34 23c-3.5 6-6.5 8.5-10 8.5S17.5 29 14 23Z" fill="none" stroke="#00ff66" stroke-width="1.3" opacity=".85"/>
+          <ellipse cx="24" cy="23" rx="2.2" ry="5.2" fill="#00ff66"/>
+          <path d="M24 10v3M24 33v3" stroke="#00f0ff" stroke-width="1.2" opacity=".7"/>
+        </svg>
+        <div>
+          <span class="agency-name">DEPT. OF REPTILIAN CONTAINMENT</span>
+          <span class="agency-sub">Bureau of Occam’s Razor · Anomaly Desk 7</span>
+        </div>
+      </div>
+      <div class="head-meta">
+        <span id="clock">UTC 00:00:00</span>
+        <span class="live-pill"><i></i>LINK STABLE</span>
+      </div>
+    </div>
+
+    <div class="hero-kicker"><i></i>ANOMALY FILE KMN-40B · EYES ONLY</div>
+    <h1 class="glitch" data-text="PROJECT KAMINO">PROJECT KAMINO</h1>
+    <div class="protocol">The Neck Extension &amp; Anomaly Protocol</div>
+    <p class="lede">
+      A diagnostic dashboard to determine if Washington D.C. has been breached by
+      <em>Star Wars</em> clone masters — or if someone just found the Photoshop warp tool.
+    </p>
+
+    <div class="status-strip" aria-label="Terminal status readouts">
+      <span class="stat"><em>AGENT:</em><b>avg56xt</b></span>
+      <span class="stat ok"><i class="led"></i><em>STATUS:</em><b>PANIC MITIGATED</b></span>
+      <span class="stat ok"><i class="led"></i><em>OCCAM’S RAZOR:</em><b>ACTIVE</b></span>
+      <span class="stat"><em>NECK BUDGET:</em><b>40.0″</b></span>
+      <button class="sound-toggle" id="soundToggle" type="button" aria-pressed="false">SOUND: OFF</button>
+    </div>
+  </header>
+
+  <main class="main-grid">
+
+    <!-- ================= MODULE 01 ================= -->
+    <section class="card neck-card" id="neckCard" data-tier="0" aria-labelledby="neckTitle">
+      <div class="card-top">
+        <span>MODULE 01 // VISUAL CALIBRATION</span>
+        <span class="card-status" id="neckCardStatus"><i></i>CALIBRATED</span>
+      </div>
+      <h2 id="neckTitle">The Kaminoan Neck Slider</h2>
+      <p class="card-sub">Drag the calibration control to simulate parasol-grade cervical extension. Do not attempt on a living official.</p>
+
+      <div class="neck-layout">
+        <div class="neck-stage" aria-hidden="false">
+          <span class="stage-label tl">SUBJECT: <b>REDACTED</b></span>
+          <span class="stage-label tr" id="stageCam">CAM 04 // 60 FPS</span>
+          <span class="stage-label bl">SCAN: OCCAM-7</span>
+          <span class="stage-label br">DO NOT SHARE</span>
+
+          <svg class="portrait-svg" viewBox="0 0 420 600" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="portraitTitle portraitDesc">
+            <title id="portraitTitle">Stylized portrait of a woman in a blazer</title>
+            <desc id="portraitDesc">Her neck stretches upward as the neck elongation slider moves from zero to forty inches.</desc>
+            <defs>
+              <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#f3cba6"/>
+                <stop offset=".65" stop-color="#e5b389"/>
+                <stop offset="1" stop-color="#d39b70"/>
+              </linearGradient>
+              <linearGradient id="blazer" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#243745"/>
+                <stop offset="1" stop-color="#0e171e"/>
+              </linearGradient>
+              <linearGradient id="hairGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#eacb8b"/>
+                <stop offset=".6" stop-color="#d3ab67"/>
+                <stop offset="1" stop-color="#a97d43"/>
+              </linearGradient>
+              <radialGradient id="halo" cx="50%" cy="45%" r="55%">
+                <stop offset="0" stop-color="#00ff66" stop-opacity=".12"/>
+                <stop offset=".6" stop-color="#00ff66" stop-opacity=".035"/>
+                <stop offset="1" stop-color="#00ff66" stop-opacity="0"/>
+              </radialGradient>
+              <pattern id="gridPat" width="30" height="30" patternUnits="userSpaceOnUse">
+                <path d="M30 0H0V30" fill="none" stroke="#00ff66" stroke-opacity=".055" stroke-width="1"/>
+              </pattern>
+            </defs>
+
+            <!-- backdrop -->
+            <rect x="0" y="0" width="420" height="600" fill="url(#gridPat)"/>
+            <circle cx="210" cy="280" r="198" fill="url(#halo)"/>
+            <circle cx="210" cy="280" r="172" fill="none" stroke="#00ff66" stroke-opacity=".11" stroke-dasharray="2 9"/>
+            <path d="M210 34v10M210 516v10M42 280h10M368 280h10" stroke="#00ff66" stroke-opacity=".22" stroke-width="1"/>
+            <ellipse cx="210" cy="592" rx="168" ry="12" fill="#000" opacity=".45"/>
+
+            <!-- neck (dynamic) -->
+            <g id="neckGroup">
+              <path id="neckPath" fill="url(#skin)" stroke="#bd865d" stroke-width="1.2"/>
+              <path id="neckShadeL" fill="none" stroke="#c48b62" stroke-width="1.5" stroke-linecap="round" opacity=".55"/>
+              <path id="neckShadeR" fill="none" stroke="#c48b62" stroke-width="1.5" stroke-linecap="round" opacity=".55"/>
+              <ellipse id="neckShadow" cx="210" cy="362" rx="19" ry="9" fill="#c78f66" opacity=".42"/>
+              <g id="neckRings" stroke="#b9855f" stroke-width="1" opacity="0" stroke-linecap="round">
+                <line id="ring1"/>
+                <line id="ring2"/>
+                <line id="ring3"/>
+              </g>
+            </g>
+
+            <!-- body (static) -->
+            <g id="bodyGroup">
+              <path d="M152 600 L162 462 L186 414 L234 414 L258 462 L268 600 Z" fill="#d5dde3" stroke="#a7b6c0" stroke-width="1"/>
+              <path d="M72 600 L72 516 Q74 464 120 440 L186 414 L210 520 L234 414 L300 440 Q346 464 348 516 L348 600 Z" fill="url(#blazer)" stroke="#3a5666" stroke-width="1.3"/>
+              <path d="M186 414 L210 520 L192 532 L150 460 Z" fill="#2b3f4e" stroke="#42616f" stroke-width="1"/>
+              <path d="M234 414 L210 520 L228 532 L270 460 Z" fill="#2b3f4e" stroke="#42616f" stroke-width="1"/>
+              <path d="M191 426 L206 500" stroke="#5a7d8c" stroke-width="1" opacity=".5"/>
+              <path d="M229 426 L214 500" stroke="#5a7d8c" stroke-width="1" opacity=".5"/>
+              <path d="M178 416 Q210 442 242 416 L248 428 Q210 460 172 428 Z" fill="#e3e9ed" stroke="#aebdc7" stroke-width="1"/>
+              <path d="M96 470 Q110 448 140 434" stroke="#4a6c7b" stroke-width="1.4" fill="none" opacity=".55"/>
+              <path d="M324 470 Q310 448 280 434" stroke="#4a6c7b" stroke-width="1.4" fill="none" opacity=".55"/>
+              <path d="M84 540 Q120 522 150 540" stroke="#0a1117" stroke-width="1.2" fill="none" opacity=".45"/>
+              <path d="M336 540 Q300 522 270 540" stroke="#0a1117" stroke-width="1.2" fill="none" opacity=".45"/>
+              <circle cx="244" cy="468" r="4" fill="#d9b45c" stroke="#8a6f2e" stroke-width=".8"/>
+              <circle cx="244" cy="468" r="1.3" fill="#8a6f2e"/>
+              <path d="M126 508 L138 506 L132 516 Z" fill="#e9eef2" opacity=".8"/>
+            </g>
+
+            <!-- head (dynamic) -->
+            <g id="headGroup" transform="translate(210 348)">
+              <!-- hair back -->
+              <path d="M-78 -78 C-86 -154 -44 -192 0 -192 C44 -192 86 -154 78 -78 L71 -30 C68 -20 58 -22 56 -34 L52 -92 C44 -104 26 -110 0 -110 C-26 -110 -44 -104 -52 -92 L-56 -34 C-58 -22 -68 -20 -71 -30 Z"
+                    fill="url(#hairGrad)" stroke="#8a6433" stroke-width="1.4"/>
+              <!-- ears + earrings -->
+              <ellipse cx="-55" cy="-88" rx="9" ry="14" fill="url(#skin)" stroke="#c08a60" stroke-width="1"/>
+              <ellipse cx="55" cy="-88" rx="9" ry="14" fill="url(#skin)" stroke="#c08a60" stroke-width="1"/>
+              <circle cx="-56" cy="-69" r="3.4" fill="#eed48c" stroke="#a9843f" stroke-width=".7"/>
+              <circle cx="56" cy="-69" r="3.4" fill="#eed48c" stroke="#a9843f" stroke-width=".7"/>
+              <!-- face -->
+              <path d="M-55 -86 C-57 -148 -34 -168 0 -168 C34 -168 57 -148 55 -86 C54 -46 32 -4 0 -4 C-32 -4 -54 -46 -55 -86 Z"
+                    fill="url(#skin)" stroke="#bd865d" stroke-width="1.1"/>
+              <!-- side shading -->
+              <path d="M-55 -86 C-54 -48 -34 -10 -8 -5 C-24 -24 -33 -52 -35 -86 Z" fill="#d29a70" opacity=".33"/>
+              <path d="M55 -86 C54 -48 34 -10 8 -5 C24 -24 33 -52 35 -86 Z" fill="#d29a70" opacity=".33"/>
+              <!-- fringe -->
+              <path d="M-57 -116 C-51 -156 -24 -175 2 -175 C35 -175 57 -153 59 -115 C45 -135 21 -143 -3 -138 C-27 -133 -47 -127 -57 -116 Z"
+                    fill="url(#hairGrad)" stroke="#8a6433" stroke-width="1"/>
+              <path d="M-34 -166 C-16 -150 8 -145 30 -149" fill="none" stroke="#f5dda8" stroke-width="1.5" opacity=".55" stroke-linecap="round"/>
+              <path d="M-48 -136 C-36 -145 -22 -148 -10 -147" fill="none" stroke="#b98d4d" stroke-width="1.2" opacity=".55" stroke-linecap="round"/>
+              <!-- brows -->
+              <path d="M-44 -116 Q-28 -124 -12 -115" fill="none" stroke="#78512f" stroke-width="3.2" stroke-linecap="round"/>
+              <path d="M12 -115 Q28 -124 44 -116" fill="none" stroke="#78512f" stroke-width="3.2" stroke-linecap="round"/>
+              <!-- eyes -->
+              <path d="M-43 -99 Q-28 -110 -13 -99" fill="none" stroke="#2b1c18" stroke-width="2.4" stroke-linecap="round"/>
+              <path d="M13 -99 Q28 -110 43 -99" fill="none" stroke="#2b1c18" stroke-width="2.4" stroke-linecap="round"/>
+              <path d="M-42 -100 Q-28 -91 -14 -100 Z" fill="#f6f1ea"/>
+              <path d="M14 -100 Q28 -91 42 -100 Z" fill="#f6f1ea"/>
+              <circle cx="-28" cy="-97" r="4.3" fill="#5f7a5c"/>
+              <circle cx="28" cy="-97" r="4.3" fill="#5f7a5c"/>
+              <circle cx="-28" cy="-97" r="2" fill="#101a14"/>
+              <circle cx="28" cy="-97" r="2" fill="#101a14"/>
+              <circle cx="-26.5" cy="-98.5" r="1.1" fill="#fff" opacity=".9"/>
+              <circle cx="29.5" cy="-98.5" r="1.1" fill="#fff" opacity=".9"/>
+              <path d="M-43 -100 l-4 -2.5 M43 -100 l4 -2.5" stroke="#2b1c18" stroke-width="1.4" stroke-linecap="round"/>
+              <!-- nose -->
+              <path d="M0 -94 C-1.5 -78 -1 -69 4.5 -62 C7.5 -58.5 6.5 -55.5 1.5 -55" fill="none" stroke="#bd865d" stroke-width="1.9" stroke-linecap="round"/>
+              <circle cx="-4" cy="-56" r="1" fill="#a9714a" opacity=".65"/>
+              <!-- lips -->
+              <path d="M-14 -38 Q-7 -45 0 -39 Q7 -45 14 -38 Q7 -34 0 -35 Q-7 -34 -14 -38 Z" fill="#a34a5a" stroke="#8a3a49" stroke-width=".6"/>
+              <path d="M-13 -37.5 Q0 -24 13 -37.5 Q0 -30 -13 -37.5 Z" fill="#bf6272" stroke="#8a3a49" stroke-width=".6"/>
+              <path d="M-8 -40 Q0 -42 8 -40" fill="none" stroke="#f0c1c1" stroke-width=".8" opacity=".45"/>
+              <!-- cheeks / contour -->
+              <ellipse cx="-35" cy="-64" rx="13" ry="8" fill="#f7d7b8" opacity=".4"/>
+              <ellipse cx="35" cy="-64" rx="13" ry="8" fill="#f7d7b8" opacity=".4"/>
+              <path d="M-46 -52 Q-38 -43 -27 -45" fill="none" stroke="#c08a60" stroke-width="1.4" opacity=".5" stroke-linecap="round"/>
+              <path d="M46 -52 Q38 -43 27 -45" fill="none" stroke="#c08a60" stroke-width="1.4" opacity=".5" stroke-linecap="round"/>
+              <ellipse cx="0" cy="-11" rx="9" ry="4" fill="#cf966b" opacity=".45"/>
+              <!-- earring glints -->
+              <circle cx="-57.5" cy="-70.5" r=".9" fill="#fff" opacity=".8"/>
+              <circle cx="54.5" cy="-70.5" r=".9" fill="#fff" opacity=".8"/>
+            </g>
+
+            <!-- ruler -->
+            <g id="ruler" font-family="'Courier New', monospace">
+              <line x1="370" y1="190" x2="370" y2="396" stroke="#1f4034" stroke-width="1"/>
+              <g id="rulerTicks"></g>
+              <text x="404" y="286" transform="rotate(-90 404 286)" text-anchor="middle" font-size="6.5" letter-spacing="2" fill="#3f6b58">NECK GAUGE · INCHES</text>
+            </g>
+
+            <!-- live chin marker -->
+            <g id="marker">
+              <line id="markerLine" x1="60" y1="348" x2="382" y2="348" stroke="#00f0ff" stroke-width="1" stroke-dasharray="5 6" opacity=".5"/>
+              <polygon id="markerArrow" points="374,348 383,343 383,353" fill="#00f0ff"/>
+              <text id="markerText" x="387" y="351" font-size="8" font-family="'Courier New', monospace" fill="#00f0ff">0.0″</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="calib-panel">
+          <div class="readout-head">
+            <span class="eyebrow">Live biometric readout</span>
+            <span class="rec" id="rec"><i></i>REC</span>
+            <span class="alien-chip" id="alienChip" hidden>
+              <svg viewBox="0 0 40 64" aria-hidden="true">
+                <path d="M20 2C8 2 4 12 6 22c1.5 8 6 12 8 18v16c0 4 12 4 12 0V40c2-6 6.5-10 8-18C36 12 32 2 20 2Z" fill="#ffd7df" stroke="#ff6b8a" stroke-width="1.4"/>
+                <ellipse cx="13.5" cy="24" rx="4.7" ry="2.7" transform="rotate(-18 13.5 24)" fill="#1a0509"/>
+                <ellipse cx="26.5" cy="24" rx="4.7" ry="2.7" transform="rotate(18 26.5 24)" fill="#1a0509"/>
+                <path d="M17 32q3 2 6 0" fill="none" stroke="#ff6b8a" stroke-width="1"/>
+                <path d="M18 44h4M18 49h4" stroke="#ff6b8a" stroke-width="1" opacity=".6"/>
+              </svg>
+              <span>KAMINOAN<br>SIGNATURE</span>
+            </span>
+          </div>
+
+          <div class="neck-value">
+            <span class="num" id="neckValue">0.0</span>
+            <span class="unit">INCHES</span>
+          </div>
+
+          <div class="status-box" id="statusBox" role="status" aria-live="polite">
+            <span class="led"></span>
+            <span id="statusText">Status: Normal Human (Former Basketball Player)</span>
+          </div>
+
+          <div class="mini-metrics">
+            <span>Length: <b id="neckCm">0.0 cm</b></span>
+            <span>Neck/Head: <b id="neckRatio">0.40</b></span>
+            <span>Warp integrity: <b id="warpIntegrity">100%</b></span>
+          </div>
+
+          <label class="slider-label" for="neckSlider">
+            <span>Neck Elongation Calibration</span>
+            <span class="range">0″ — 40″</span>
+          </label>
+          <input class="neck-slider" type="range" id="neckSlider" min="0" max="40" step="0.5" value="0" aria-valuetext="0.0 inches — Normal Human" />
+          <div class="slider-scale" aria-hidden="true">
+            <span>0″</span><span>10″</span><span>20″</span><span>30″</span><span>40″</span>
+          </div>
+
+          <ul class="tier-legend" id="tierLegend">
+            <li data-tier="0"><i></i><span class="tr">0–5″</span><span class="tn">Normal Human (Former Basketball Player)</span></li>
+            <li data-tier="1"><i></i><span class="tr">6–15″</span><span class="tn">Uncanny Valley / Heavy Contour</span></li>
+            <li data-tier="2"><i></i><span class="tr">16–30″</span><span class="tn">TikTok Warp Tool in Full Effect</span></li>
+            <li data-tier="3"><i></i><span class="tr">31–40″</span><span class="tn">Level 5 Kaminoan Clone Master</span></li>
+          </ul>
+
+          <p class="calib-note">CALIBRATION NOTE: Values above 16″ void the subject’s life insurance and her ability to enter a compact car. <button class="reset-ditch" id="resetNeck" type="button">[ RESET ]</button></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= MODULE 02 ================= -->
+    <section class="card occam-card" id="occamCard" aria-labelledby="occamTitle">
+      <div class="card-top">
+        <span>MODULE 02 // LOGIC SUBSYSTEM</span>
+        <span class="card-status" id="occamStatus"><i></i>STANDBY</span>
+      </div>
+      <h2 id="occamTitle">The Occam’s Razor Diagnostic</h2>
+      <p class="card-sub">Three questions. Thirty seconds. One dramatically underqualified conclusion.</p>
+
+      <div class="q-progress" aria-hidden="true">
+        <span class="qp active" data-step="0">01 · INPUT</span>
+        <span class="qp" data-step="1">02 · PROBABILITY</span>
+        <span class="qp" data-step="2">03 · PHYSIOGNOMY</span>
+      </div>
+
+      <div id="quiz">
+        <div class="q active" data-q="1">
+          <div class="q-no">QUESTION 01 / 03</div>
+          <p class="q-text">Did you observe an official with a 3-foot neck on social media?</p>
+          <div class="q-actions">
+            <button class="btn" type="button" data-answer="yes"><b>[ YES ]</b> · I saw the photo</button>
+            <button class="btn" type="button" data-answer="no"><b>[ NO ]</b> · I have standards</button>
+          </div>
+        </div>
+
+        <div class="q" data-q="2">
+          <div class="q-no">QUESTION 02 / 03</div>
+          <p class="q-text">Which is mathematically more probable?</p>
+          <div class="q-actions col">
+            <button class="btn opt" type="button" data-answer="a"><span class="opt-tag">A</span><span>Interdimensional reptilian shapeshifters forgot human anatomy</span></button>
+            <button class="btn opt" type="button" data-answer="b"><span class="opt-tag">B</span><span>A 16-year-old on CapCut dragged the JPEG</span></button>
+          </div>
+        </div>
+
+        <div class="q" data-q="3">
+          <div class="q-no">QUESTION 03 / 03</div>
+          <p class="q-text">What explains the cheekbones?</p>
+          <div class="q-actions col">
+            <button class="btn opt" type="button" data-answer="a"><span class="opt-tag">A</span><span>Extraterrestrial exoskeleton</span></button>
+            <button class="btn opt" type="button" data-answer="b"><span class="opt-tag">B</span><span>12 syringes of dermal filler under un-diffused paparazzi camera flash</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="evidence" id="evidence">
+        <div class="ev-title">EVIDENCE LOG // KMN-40B</div>
+        <ul id="evList" data-empty="1"><li class="ev-empty">Awaiting input…</li></ul>
+      </div>
+
+      <div class="verdict" id="verdict" hidden>
+        <div class="stamp" id="stamp">
+          <div class="stamp-small">Final verdict · Form KMN-40B</div>
+          <div class="stamp-main">VERDICT: 100% PHOTOSHOP<br>&amp; BAD FILLER</div>
+          <div class="stamp-bottom">ZERO ALIENS DETECTED</div>
+        </div>
+        <div class="verdict-meta">CONFIDENCE 99.97% · OCCAM’S RAZOR: SHARP · ALIENS: 0</div>
+        <p class="verdict-note" id="verdictNote"></p>
+        <button class="btn" id="resetQuiz" type="button">[ RUN DIAGNOSTIC AGAIN ]</button>
+      </div>
+    </section>
+
+    <!-- ================= MODULE 03 ================= -->
+    <section class="card token-card" aria-labelledby="tokenTitle">
+      <div class="card-top">
+        <span>MODULE 03 // COGNITIVE STREAM</span>
+        <span class="card-status" id="tokenCardStatus"><i></i>IDLE</span>
+      </div>
+
+      <div class="inject-layout">
+        <div class="inject-copy">
+          <h2 id="tokenTitle">Reasoning Token Injector</h2>
+          <p class="card-sub">Depleted after one too many alien-neck debates? Administer 500 cc of unadulterated logic directly into the neural link. Side effects may include suddenly understanding JPEG compression.</p>
+
+          <button class="inject-btn" id="injectBtn" type="button">[ INJECT 500 REASONING TOKENS ]</button>
+
+          <p class="inject-note">DOSAGE: 500 tokens ≈ one (1) coherent thought. Do not operate heavy machinery, social media accounts, or group chats while debunking.</p>
+
+          <dl class="inject-stats">
+            <div><dt>CORE DIRECTIVE</dt><dd>RESPECT OTHER LIFEFORMS</dd></div>
+            <div><dt>TINFOIL STATUS</dt><dd>BYPASSED</dd></div>
+            <div><dt>NEURAL LINK</dt><dd>STABLE / 99.97%</dd></div>
+          </dl>
+        </div>
+
+        <div class="terminal">
+          <div class="term-bar">
+            <span class="t-dot r"></span><span class="t-dot y"></span><span class="t-dot g"></span>
+            <span class="term-title">neural_link://reasoning_stream</span>
+            <span class="term-tokens"><b id="tokenCount">000</b>/500</span>
+          </div>
+          <div class="term-body" id="termBody" role="log" aria-live="polite" aria-label="Reasoning token terminal output">
+            <div class="term-line dim"><span class="prompt">›</span>awaiting injection…<span class="cursor"></span></div>
+          </div>
+          <div class="term-foot">
+            <span id="termState">IDLE</span>
+            <div class="token-bar" aria-hidden="true"><i id="tokenBar"></i></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="foot">
+    <div class="foot-left">
+      <div class="foot-seal">KMN</div>
+      <div>DEPT. OF REPTILIAN CONTAINMENT<span>Bureau of Occam’s Razor · Anomaly Desk 7 · Form KMN-40B</span></div>
+    </div>
+    <p class="foot-note">NO KAMINOANS WERE HARMED. THEIR NECKS REMAIN 100% FICTIONAL.<br>This terminal is a satire-grade diagnostic. Do not cite it in a group chat without the sticker.</p>
+    <div class="foot-right">
+      <div class="barcode" aria-hidden="true"></div>
+      <small>AUTH: avg56xt / LVL-4</small>
+    </div>
+  </footer>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* =========================================================
+     UTILITIES
+     ========================================================= */
+  const $  = (sel, ctx = document) => ctx.querySelector(sel);
+  const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+
+  let soundOn = false;
+  let audioCtx = null;
+
+  function ensureAudio() {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) { try { audioCtx = new AC(); } catch (err) { audioCtx = null; } }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+  }
+
+  function blip(freq = 660, dur = 0.05, type = 'square', vol = 0.02) {
+    if (!soundOn || !audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const t = audioCtx.currentTime;
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t);
+      gain.gain.setValueAtTime(vol, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + dur + 0.02);
+    } catch (err) { /* audio is decoration */ }
+  }
+
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  /* =========================================================
+     SOUND TOGGLE + CLOCK
+     ========================================================= */
+  const soundToggle = $('#soundToggle');
+  soundToggle.addEventListener('click', () => {
+    soundOn = !soundOn;
+    soundToggle.classList.toggle('on', soundOn);
+    soundToggle.setAttribute('aria-pressed', String(soundOn));
+    soundToggle.textContent = 'SOUND: ' + (soundOn ? 'ON' : 'OFF');
+    if (soundOn) { ensureAudio(); blip(920, 0.07, 'square', 0.025); }
+  });
+
+  const clockEl = $('#clock');
+  function tickClock() {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    clockEl.textContent = 'UTC ' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds());
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  /* =========================================================
+     MODULE 01 — KAMINOAN NECK SLIDER
+     ========================================================= */
+  const BASE_CHIN_Y = 348;   // SVG y of chin at 0 inches
+  const PX_PER_IN   = 3.75;  // 40 in → 150 px of neck
+  const NECK_END_Y  = 468;   // hidden inside the blazer
+  const HEAD_HEIGHT = 164;
+  const BASE_NECK   = 66;    // visible px at 0 inches (chin → collar)
+
+  const neckCard   = $('#neckCard');
+  const slider     = $('#neckSlider');
+  const headGroup  = $('#headGroup');
+  const neckPath   = $('#neckPath');
+  const neckShadeL = $('#neckShadeL');
+  const neckShadeR = $('#neckShadeR');
+  const neckShadow = $('#neckShadow');
+  const neckRings  = $('#neckRings');
+  const rings      = [$('#ring1'), $('#ring2'), $('#ring3')];
+  const markerLine = $('#markerLine');
+  const markerArrow= $('#markerArrow');
+  const markerText = $('#markerText');
+  const statusBox  = $('#statusBox');
+  const statusText = $('#statusText');
+  const alienChip  = $('#alienChip');
+  const recTag     = $('#rec');
+  const stageCam   = $('#stageCam');
+  const neckCardStatus = $('#neckCardStatus');
+  const legendItems = $$('#tierLegend li');
+  const valueEl    = $('#neckValue');
+  const cmEl       = $('#neckCm');
+  const ratioEl    = $('#neckRatio');
+  const warpEl     = $('#warpIntegrity');
+  let currentTier  = 0;
+
+  const TIERS = [
+    { max: 5,  short: 'Normal Human',  label: 'Status: Normal Human (Former Basketball Player)' },
+    { max: 15, short: 'Uncanny Valley', label: 'Status: Uncanny Valley Territory / Heavy Contour Detected' },
+    { max: 30, short: 'TikTok Warp',    label: 'Status: TikTok Warp Tool in Full Effect' },
+    { max: 40, short: 'Kaminoan Clone', label: 'ALERT: Level 5 Kaminoan Clone Master / Currently peering over acacia trees for leaves' }
+  ];
+
+  /* Build the inch ruler ticks once. */
+  (function buildRuler() {
+    const holder = $('#rulerTicks');
+    for (let i = 0; i <= 40; i++) {
+      const y = BASE_CHIN_Y - i * PX_PER_IN;
+      const major = i % 10 === 0;
+      const tick = document.createElementNS(SVG_NS, 'line');
+      tick.setAttribute('x1', major ? 356 : 362);
+      tick.setAttribute('x2', 370);
+      tick.setAttribute('y1', y);
+      tick.setAttribute('y2', y);
+      tick.setAttribute('stroke', major ? '#4d8a6f' : '#2c5a45');
+      tick.setAttribute('stroke-width', major ? '1.2' : '0.8');
+      holder.appendChild(tick);
+      if (major) {
+        const label = document.createElementNS(SVG_NS, 'text');
+        label.setAttribute('x', 352);
+        label.setAttribute('y', y + 3);
+        label.setAttribute('text-anchor', 'end');
+        label.setAttribute('font-size', '8');
+        label.setAttribute('fill', '#5c8a75');
+        label.textContent = i + '″';
+        holder.appendChild(label);
+      }
+    }
+  })();
+
+  function neckPathD(topY) {
+    const halfTop = 26;
+    const halfBase = 40;
+    const at = (f) => topY + (NECK_END_Y - topY) * f;
+    return 'M ' + (210 - halfTop) + ' ' + topY +
+      ' C ' + (210 - halfTop - 3) + ' ' + at(0.28) + ', ' + (210 - halfBase - 6) + ' ' + at(0.72) + ', ' + (210 - halfBase) + ' ' + NECK_END_Y +
+      ' L ' + (210 + halfBase) + ' ' + NECK_END_Y +
+      ' C ' + (210 + halfBase + 6) + ' ' + at(0.72) + ', ' + (210 + halfTop + 3) + ' ' + at(0.28) + ', ' + (210 + halfTop) + ' ' + topY + ' Z';
+  }
+
+  function updateNeck() {
+    const inches = parseFloat(slider.value);
+    const d = inches * PX_PER_IN;
+    const chinY = BASE_CHIN_Y - d;
+    const topY = chinY - 26;
+    const tier = inches <= 5 ? 0 : inches <= 15 ? 1 : inches <= 30 ? 2 : 3;
+
+    /* stretch the artwork */
+    headGroup.setAttribute('transform', 'translate(210 ' + chinY + ')');
+    neckPath.setAttribute('d', neckPathD(topY));
+
+    const span = NECK_END_Y - topY;
+    const shadeL = 'M 199 ' + (topY + span * 0.36) +
+      ' C 196 ' + (topY + span * 0.55) + ', 197 ' + (topY + span * 0.78) + ', 199.5 ' + (NECK_END_Y - 14);
+    const shadeR = 'M 221 ' + (topY + span * 0.36) +
+      ' C 224 ' + (topY + span * 0.55) + ', 223 ' + (topY + span * 0.78) + ', 220.5 ' + (NECK_END_Y - 14);
+    neckShadeL.setAttribute('d', shadeL);
+    neckShadeR.setAttribute('d', shadeR);
+    neckShadow.setAttribute('cy', chinY + 16);
+
+    /* comedy stretch-rings appear on very long necks */
+    const ringOpacity = d > 70 ? Math.min(0.42, (d - 70) / 150) : 0;
+    neckRings.style.opacity = String(ringOpacity);
+    rings.forEach((ring, i) => {
+      const f = 0.34 + i * 0.17;
+      const y = topY + span * f;
+      const half = 26 + 14 * f;
+      ring.setAttribute('x1', 210 - half + 5);
+      ring.setAttribute('x2', 210 + half - 5);
+      ring.setAttribute('y1', y);
+      ring.setAttribute('y2', y);
+    });
+
+    /* ruler marker */
+    markerLine.setAttribute('y1', chinY);
+    markerLine.setAttribute('y2', chinY);
+    markerArrow.setAttribute('points', '374,' + chinY + ' 383,' + (chinY - 5) + ' 383,' + (chinY + 5));
+    markerText.setAttribute('y', chinY + 3);
+    markerText.textContent = inches.toFixed(1) + '″';
+
+    /* readouts */
+    valueEl.textContent = inches.toFixed(1);
+    cmEl.textContent = (inches * 2.54).toFixed(1) + ' cm';
+    const ratio = (BASE_NECK + d) / HEAD_HEIGHT;
+    ratioEl.textContent = ratio.toFixed(2);
+    ratioEl.classList.toggle('hot', ratio > 1);
+    warpEl.textContent = Math.max(0, 100 - inches * 2.1).toFixed(0) + '%';
+
+    statusText.textContent = TIERS[tier].label;
+    statusBox.classList.toggle('alert', tier === 3);
+
+    if (tier !== currentTier) {
+      currentTier = tier;
+      neckCard.dataset.tier = String(tier);
+      legendItems.forEach((li, i) => li.classList.toggle('active', i === tier));
+      alienChip.hidden = tier !== 3;
+      recTag.style.display = tier === 3 ? 'none' : '';
+      stageCam.textContent = tier === 3 ? '⚠ CEPHALIC ANOMALY' : 'CAM 04 // 60 FPS';
+      stageCam.classList.toggle('alert', tier === 3);
+      neckCardStatus.textContent = tier === 3 ? 'ANOMALY' : 'CALIBRATED';
+      neckCardStatus.classList.toggle('alert', tier === 3);
+      if (tier === 3) {
+        blip(180, 0.18, 'sawtooth', 0.03);
+        setTimeout(() => blip(140, 0.22, 'sawtooth', 0.025), 180);
+      } else {
+        blip(620 + tier * 90, 0.045, 'square', 0.015);
+      }
+    }
+
+    slider.setAttribute('aria-valuetext', inches.toFixed(1) + ' inches — ' + TIERS[tier].short);
+  }
+
+  slider.addEventListener('input', updateNeck);
+  $('#resetNeck').addEventListener('click', () => {
+    slider.value = '0';
+    updateNeck();
+    blip(500, 0.05, 'square', 0.015);
+  });
+
+  /* Initial paint */
+  slider.value = '0';
+  currentTier = -1;
+  updateNeck();
+
+  /* =========================================================
+     MODULE 02 — OCCAM'S RAZOR DIAGNOSTIC
+     ========================================================= */
+  const quiz        = $('#quiz');
+  const questions   = $$('#quiz .q');
+  const progress    = $$('.q-progress .qp');
+  const evList      = $('#evList');
+  const verdict     = $('#verdict');
+  const stamp       = $('#stamp');
+  const verdictNote = $('#verdictNote');
+  const occamStatus = $('#occamStatus');
+  const occamCard   = $('#occamCard');
+
+  const EVIDENCE = [
+    { yes: 'Visual contact CONFIRMED. Source logged as “TikTok”.', no: 'Visual contact DENIED. Subject completed a neck diagnostic anyway.' },
+    { a: 'Hypothesis A: interdimensional reptilian shapeshifter — p = 0.000%.', b: 'Hypothesis B: CapCut JPEG warp — p = 99.997%.' },
+    { a: 'Cheekbones: extraterrestrial exoskeleton — supporting evidence: none.', b: 'Cheekbones: 12 syringes + paparazzi flash — evidence: overwhelming.' }
+  ];
+
+  const answers = [null, null, null];
+
+  function setStatus(el, text, cls) {
+    el.textContent = text;
+    el.className = 'card-status' + (cls ? ' ' + cls : '');
+    if (!el.querySelector('i')) {
+      const dot = document.createElement('i');
+      el.prepend(dot);
+    }
+  }
+
+  function showQuestion(index) {
+    questions.forEach((q, i) => q.classList.toggle('active', i === index));
+    progress.forEach((p, i) => {
+      p.classList.toggle('active', i === index);
+      p.classList.toggle('done', i < index);
+    });
+    if (index === 0) {
+      setStatus(occamStatus, 'STANDBY', '');
+    } else {
+      setStatus(occamStatus, 'ANALYZING', '');
+    }
+  }
+
+  function addEvidence(index, value) {
+    if (evList.dataset.empty === '1') {
+      evList.innerHTML = '';
+      delete evList.dataset.empty;
+    }
+    const li = document.createElement('li');
+    const b = document.createElement('b');
+    b.textContent = 'Q' + (index + 1) + ' → ';
+    li.appendChild(b);
+    li.appendChild(document.createTextNode(EVIDENCE[index][value]));
+    evList.appendChild(li);
+  }
+
+  function verdictCopy() {
+    const absurd = (answers[1] === 'a' ? 1 : 0) + (answers[2] === 'a' ? 1 : 0);
+    let note;
+    if (absurd === 2) {
+      note = 'You endorsed both extraterrestrial hypotheses and still completed the full diagnostic. The Bureau recommends touching grass within 24 hours.';
+    } else if (absurd === 1) {
+      note = 'One alien hypothesis survived contact with Occam’s Razor. It has been escorted from the building by a man with a clipboard.';
+    } else {
+      note = 'You chose the boring explanation at every turn. Congratulations — you are now legally qualified to fact-check your group chat.';
+    }
+    if (answers[0] === 'no') {
+      note += ' You also denied seeing the photo and then finished a three-question neck diagnostic. That is now the anomaly.';
+    } else {
+      note += ' The 3-foot neck was a JPEG. The cheekbones were a syringe. The truth was wearing a lanyard the whole time.';
+    }
+    return note;
+  }
+
+  function finishDiagnostic() {
+    quiz.hidden = true;
+    progress.forEach((p) => { p.classList.remove('active'); p.classList.add('done'); });
+    verdict.hidden = false;
+    verdictNote.textContent = verdictCopy();
+    stamp.classList.remove('in');
+    void stamp.offsetWidth;
+    stamp.classList.add('in');
+    setStatus(occamStatus, 'VERDICT ISSUED', 'done');
+    occamCard.classList.remove('flash');
+    void occamCard.offsetWidth;
+    occamCard.classList.add('flash');
+    blip(150, 0.22, 'sawtooth', 0.05);
+    setTimeout(() => blip(110, 0.3, 'sawtooth', 0.035), 170);
+  }
+
+  quiz.addEventListener('click', (event) => {
+    const btn = event.target.closest('button[data-answer]');
+    if (!btn) return;
+    const qEl = btn.closest('.q');
+    const index = questions.indexOf(qEl);
+    if (index < 0 || answers[index] !== null) return;
+
+    answers[index] = btn.dataset.answer;
+    blip(760, 0.05, 'square', 0.02);
+    addEvidence(index, btn.dataset.answer);
+    qEl.classList.add('answered');
+    setStatus(occamStatus, 'ANALYZING', '');
+
+    if (index < questions.length - 1) {
+      setTimeout(() => showQuestion(index + 1), 300);
+    } else {
+      setTimeout(finishDiagnostic, 420);
+    }
+  });
+
+  $('#resetQuiz').addEventListener('click', () => {
+    answers[0] = answers[1] = answers[2] = null;
+    questions.forEach((q) => {
+      q.classList.remove('answered');
+      q.classList.remove('active');
+    });
+    verdict.hidden = true;
+    stamp.classList.remove('in');
+    quiz.hidden = false;
+    evList.innerHTML = '<li class="ev-empty">Awaiting input…</li>';
+    evList.dataset.empty = '1';
+    showQuestion(0);
+    blip(600, 0.05, 'square', 0.02);
+  });
+
+  /* =========================================================
+     MODULE 03 — REASONING TOKEN INJECTOR
+     ========================================================= */
+  const TERM_LINES = [
+    { t: 'Initializing cognitive compute stream...', cls: 'dim' },
+    { t: 'Allocating 500 reasoning tokens to client agent avg56xt...', cls: '' },
+    { t: 'Scanning visual feeds: Kelly Loeffler, Barbara Thornhill, Susan Dell...', cls: 'am' },
+    { t: 'Deconstructing wind-tunnel facelift aerodynamics... [DONE]', cls: 'cy' },
+    { t: 'Bypassing tinfoil shielding... [SUCCESS]', cls: 'cy' },
+    { t: 'Applying Occam’s Razor to JPEG compression artifacts...', cls: '' },
+    { t: 'Core Directive loaded: "RESPECT OTHER LIFEFORMS!"', cls: 'ok' },
+    { t: 'Cognitive balance restored. Breathing status: NORMAL.', cls: 'ok' }
+  ];
+
+  const termBody = $('#termBody');
+  const termState = $('#termState');
+  const tokenCount = $('#tokenCount');
+  const tokenBar = $('#tokenBar');
+  const injectBtn = $('#injectBtn');
+  const tokenCardStatus = $('#tokenCardStatus');
+  let running = false;
+
+  async function runInjection() {
+    if (running) return;
+    running = true;
+    ensureAudio();
+    injectBtn.disabled = true;
+    injectBtn.textContent = '◉ INJECTING 500 REASONING TOKENS…';
+    setStatus(tokenCardStatus, 'STREAMING', '');
+    termState.className = 'live';
+    termState.textContent = 'STREAMING';
+    termBody.innerHTML = '';
+    tokenCount.textContent = '000';
+    tokenBar.style.width = '0%';
+
+    const totalChars = TERM_LINES.reduce((sum, line) => sum + line.t.length, 0);
+    let typedChars = 0;
+
+    for (const line of TERM_LINES) {
+      const row = document.createElement('div');
+      row.className = 'term-line';
+      const prompt = document.createElement('span');
+      prompt.className = 'prompt';
+      prompt.textContent = '›';
+      const text = document.createElement('span');
+      text.className = 'line-text';
+      const cursor = document.createElement('span');
+      cursor.className = 'cursor';
+      row.appendChild(prompt);
+      row.appendChild(text);
+      row.appendChild(cursor);
+      termBody.appendChild(row);
+      termBody.scrollTop = termBody.scrollHeight;
+
+      for (const ch of line.t) {
+        text.textContent += ch;
+        typedChars += 1;
+        const progress = typedChars / totalChars;
+        tokenCount.textContent = String(Math.min(500, Math.round(progress * 500))).padStart(3, '0');
+        tokenBar.style.width = (progress * 100).toFixed(1) + '%';
+        await sleep(6 + Math.random() * 15);
+      }
+
+      row.classList.add(line.cls);
+      cursor.remove();
+      if (typedChars % 40 < 18) termBody.scrollTop = termBody.scrollHeight;
+      blip(520 + Math.random() * 120, 0.02, 'square', 0.008);
+      await sleep(120 + Math.random() * 190);
+      termBody.scrollTop = termBody.scrollHeight;
+    }
+
+    tokenCount.textContent = '500';
+    tokenBar.style.width = '100%';
+
+    const ready = document.createElement('div');
+    ready.className = 'term-line dim ready-line';
+    const readyPrompt = document.createElement('span');
+    readyPrompt.className = 'prompt';
+    readyPrompt.textContent = '›';
+    ready.appendChild(readyPrompt);
+    ready.appendChild(document.createTextNode('awaiting next injection…'));
+    const readyCursor = document.createElement('span');
+    readyCursor.className = 'cursor';
+    ready.appendChild(readyCursor);
+    termBody.appendChild(ready);
+    termBody.scrollTop = termBody.scrollHeight;
+
+    termState.className = 'done';
+    termState.textContent = 'COMPLETE';
+    setStatus(tokenCardStatus, 'CORE STABLE', 'done');
+    injectBtn.disabled = false;
+    injectBtn.textContent = '[ RE-INJECT 500 REASONING TOKENS ]';
+    running = false;
+
+    blip(880, 0.08, 'sine', 0.03);
+    setTimeout(() => blip(1180, 0.12, 'sine', 0.025), 90);
+  }
+
+  injectBtn.addEventListener('click', () => {
+    ensureAudio();
+    blip(720, 0.06, 'square', 0.02);
+    runInjection();
+  });
+
+  /* =========================================================
+     MISC POLISH
+     ========================================================= */
+  // Stamp landing shimmer
+  const styleTag = document.createElement('style');
+  styleTag.textContent = '@keyframes flashCard{0%{background-color:rgba(255,51,102,.12)}100%{background-color:rgba(255,255,255,.04)}}.card.flash{animation:flashCard .55s ease-out}';
+  document.head.appendChild(styleTag);
+
+  // Keep the head group accessible name sanitised if slider is keyboard-driven.
+  slider.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Home' || e.key === 'End') {
+      // native range handles the value; update fires next tick
+      setTimeout(updateNeck, 0);
+    }
+  });
+})();
+</script>
+</body>
+</html>
